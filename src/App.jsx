@@ -53,7 +53,7 @@ const initialData = {
 };
 // --- STATIC STUDY LINKS (YEARS OLD) ---
 const STUDY_LINKS_MESSAGES = [
-  { id: 'sl1', authorId: 'u2', text: "Found this amazing site for any subject, classes 8-12: https://www.khanacademy.org/", timestamp: "2019-10-12T14:20:00Z" },
+  { id: 'sl1', authorId: 'u2', text: "Found this amazing site https://www.khanacademy.org/", timestamp: "2019-10-12T14:20:00Z" },
   { id: 'sl2', authorId: 'u2', text: "Best YouTube channel for history and science explainers: https://thecrashcourse.com/", timestamp: "2020-04-05T11:15:00Z" },
   { id: 'sl3', authorId: 'u2', text: "If you need to memorize terms or formulas, use this: https://quizlet.com/", timestamp: "2021-01-20T16:45:00Z" },
   { id: 'sl4', authorId: 'u2', text: "For math and chemistry problem solving: https://www.wolframalpha.com/", timestamp: "2022-05-14T09:30:00Z" }
