@@ -73,7 +73,7 @@ const STORY_MESSAGES = [
   { id: 'p10', authorId: 'u2', text: "the way he was talking to you tho\ni didn't like it\n\nfelt so rude\nyou didn't do anything wrong and he was just—\nidk it bothered me a lot", timestamp: "2026-05-26T08:14:10Z" },
   { id: 'p11', authorId: 'u1', text: "it's okay\nhe was just doing his job i guess", timestamp: "2026-05-26T08:14:25Z" },
   { id: 'p12', authorId: 'u2', text: "no i get that but still\nthe tone wasn't needed\nyou're not a criminal", timestamp: "2026-05-26T08:14:45Z" },
-  { id: 'p13', authorId: 'u1', text: "i should've said you're a stranger 😭\n\nanyway i called mom after\nshe picked up and was like\ i didn't call you?\n\nso they came on their own\nthe guards did", timestamp: "2026-05-26T08:15:10Z" },
+  { id: 'p13', authorId: 'u1', text: "i should've said you're a stranger 😭\n\nanyway i called mom after\nshe picked up and was like\ni didn't call you?\n\nso they came on their own\nthe guards did", timestamp: "2026-05-26T08:15:10Z" },
   { id: 'p14', authorId: 'u2', text: "they went to your house??", timestamp: "2026-05-26T08:15:25Z" },
   { id: 'p15', authorId: 'u1', text: "no no i'm at the park still\ni don't want to go home just yet\n\nit's a very restricted community man 👍", timestamp: "2026-05-26T08:15:45Z" },
   { id: 'p16', authorId: 'u2', text: "have they talked to anyone inside your house?", timestamp: "2026-05-26T08:16:00Z" },
@@ -232,7 +232,7 @@ const STORY_MESSAGES = [
   { id: 'm47', authorId: 'u2', text: "that's everything i had\n\ntake all the time you need\ni'll be here", timestamp: "2026-06-04T10:21:00Z" }
 ];
 
-export default function DiscordClone() {
+export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
@@ -438,6 +438,7 @@ export default function DiscordClone() {
         </div>
       </div>
 
+      <div className="w-[240px] bg-[#2b2d31] shrink-0 flex flex-col z-10">
         <div className="h-12 border-b border-[#1f2023] shadow-sm flex items-center justify-between px-4 hover:bg-[#35373c] cursor-pointer transition-colors min-w-0 group">
           <h1 className="font-bold text-[#f2f3f5] truncate text-[17px] flex-1 leading-[20px]">{activeServer.name}</h1>
           <ChevronDown size={18} className="text-[#dbdee1] shrink-0 ml-1 opacity-80 group-hover:opacity-100 transition-opacity" />
@@ -500,7 +501,6 @@ export default function DiscordClone() {
                     </div>
                   )}
                   
-                  {/* MAGIC FIX: Wrapper with items-start and gap-4 */}
                   <div className="flex items-start gap-4 px-4 py-[0.125rem] mt-[1.0625rem] group hover:bg-[#2e3035] -mx-4">
                     <div className="w-10 shrink-0 ml-2">
                        <img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full object-cover mt-0.5 bg-gray-700" />
@@ -514,7 +514,6 @@ export default function DiscordClone() {
                       
                       <div className="flex flex-col gap-[2px]">
                         {group.items.map((msg, mIndex) => {
-                          const isHeader = mIndex === 0;
                           return (
                             <div key={msg.id} className="relative group/msg" onContextMenu={(e) => { e.preventDefault(); if(activeChannelId==='c2') return; setContextMenu({ x: e.clientX, y: e.clientY, message: msg }); }}>
                               {editingMessageId === msg.id ? (
