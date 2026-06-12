@@ -52,6 +52,14 @@ const initialData = {
   ]
 };
 
+// --- STATIC STUDY LINKS (YEARS OLD) ---
+const STUDY_LINKS_MESSAGES = [
+  { id: 'sl1', authorId: 'u2', text: "Python docs for our project: https://docs.python.org/3/", timestamp: "2019-11-05T16:45:00Z" },
+  { id: 'sl2', authorId: 'u2', text: "MIT free course on CS if you're interested: https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/", timestamp: "2020-03-10T14:30:00Z" },
+  { id: 'sl3', authorId: 'u2', text: "Found this Calculus course, really helpful for next semester: https://www.khanacademy.org/math/calculus-1", timestamp: "2021-09-15T10:00:00Z" },
+  { id: 'sl4', authorId: 'u2', text: "The best resource for web dev: https://developer.mozilla.org/", timestamp: "2022-01-20T09:15:00Z" }
+];
+
 const STORY_MESSAGES = [
   { id: 'p1', authorId: 'u2', text: "ugh", timestamp: "2026-05-26T08:11:00Z" },
   { id: 'p2', authorId: 'u2', text: "they took a pic of me", timestamp: "2026-05-26T08:11:10Z" },
@@ -224,7 +232,7 @@ const STORY_MESSAGES = [
   { id: 'm47', authorId: 'u2', text: "that's everything i had\n\ntake all the time you need\ni'll be here", timestamp: "2026-06-04T10:21:00Z" }
 ];
 
-export default function App() {
+export default function DiscordClone() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
@@ -249,6 +257,13 @@ export default function App() {
   // --- FIREBASE: FETCH MESSAGES REAL-TIME (LOCAL SORT) ---
   useEffect(() => {
     if (!isLoggedIn) return;
+    
+    if (activeChannelId === 'c2') {
+       setMessages(STUDY_LINKS_MESSAGES);
+       setIsLoading(false);
+       return;
+    }
+
     setIsLoading(true);
 
     const q = query(
@@ -257,7 +272,7 @@ export default function App() {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (snapshot.empty) {
+      if (snapshot.empty && activeChannelId === 'c1') {
         seedDatabase();
       } else {
         const msgs = snapshot.docs.map(doc => ({
@@ -321,6 +336,7 @@ export default function App() {
   };
 
   const handleSendMessage = async (e) => {
+    if (activeChannelId === 'c2') return; // Disable sending in study-links
     if (e.key === 'Enter' && newMessage.trim()) {
       try {
         await addDoc(collection(db, "messages"), {
@@ -337,7 +353,7 @@ export default function App() {
   };
 
   const handleEditMessage = async () => {
-    if (!editMessageText.trim()) return;
+    if (!editMessageText.trim() || activeChannelId === 'c2') return;
     try {
       await updateDoc(doc(db, "messages", editingMessageId), { text: editMessageText });
       setEditingMessageId(null);
@@ -347,6 +363,7 @@ export default function App() {
   };
 
   const handleDeleteMessage = async (messageId) => {
+    if (activeChannelId === 'c2') return;
     try {
       await deleteDoc(doc(db, "messages", messageId));
       setContextMenu(null);
@@ -510,7 +527,7 @@ export default function App() {
         <div className="px-4 pb-6 pt-2 shrink-0">
           <div className="bg-[#383a40] rounded-lg flex items-center px-4 py-2.5">
             <button className="text-[#b5bac1] hover:text-[#dbdee1] mr-4"><Plus size={24} className="bg-[#4e5058] rounded-full p-1" /></button>
-            <input type="text" placeholder={`Message #${activeChannel.name}`} className="bg-transparent outline-none flex-1 text-[#dbdee1] placeholder-[#949ba4]" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleSendMessage} />
+            <input type="text" placeholder={activeChannelId === 'c2' ? "You do not have permission to send messages in this channel." : `Message #${activeChannel.name}`} disabled={activeChannelId === 'c2'} className="bg-transparent outline-none flex-1 text-[#dbdee1] placeholder-[#949ba4] disabled:cursor-not-allowed" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleSendMessage} />
             <div className="flex items-center text-[#b5bac1] gap-3 ml-2">
               <button className="hover:text-[#dbdee1]"><Gift size={20} /></button>
               <button className="hover:text-[#dbdee1]"><Sticker size={20} /></button>
@@ -522,7 +539,7 @@ export default function App() {
 
       {contextMenu && (
         <div className="fixed bg-[#111214] border border-[#1e1f22] shadow-xl rounded w-48 py-1.5 z-50 text-[#b5bac1] text-sm font-medium" style={{ left: contextMenu.x, top: contextMenu.y }} onClick={(e) => e.stopPropagation()}>
-          <div className="px-3 py-1.5 hover:bg-[#4752c4] hover:text-white cursor-pointer flex items-center justify-between mx-1 rounded-sm group transition-colors" onClick={() => { setEditingMessageId(contextMenu.message.id); setEditMessageText(contextMenu.message.text); setContextMenu(null); }}>
+          <div className="px-3 py-1.5 hover:bg-[#4752c4] hover:text-white cursor-pointer flex items-center justify-between mx-1 rounded-sm group transition-colors" onClick={() => { if(activeChannelId==='c2') return; setEditingMessageId(contextMenu.message.id); setEditMessageText(contextMenu.message.text); setContextMenu(null); }}>
             <span>Edit Message</span><Pencil size={14} className="opacity-80 group-hover:opacity-100" />
           </div>
           <div className="h-px bg-[#2b2d31] my-1 mx-2"></div>

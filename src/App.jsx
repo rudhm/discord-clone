@@ -52,6 +52,14 @@ const initialData = {
   ]
 };
 
+// --- STATIC STUDY LINKS (YEARS OLD) ---
+const STUDY_LINKS_MESSAGES = [
+  { id: 'sl1', authorId: 'u2', text: "Python docs for our project: https://docs.python.org/3/", timestamp: "2019-11-05T16:45:00Z" },
+  { id: 'sl2', authorId: 'u2', text: "MIT free course on CS if you're interested: https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/", timestamp: "2020-03-10T14:30:00Z" },
+  { id: 'sl3', authorId: 'u2', text: "Found this Calculus course, really helpful for next semester: https://www.khanacademy.org/math/calculus-1", timestamp: "2021-09-15T10:00:00Z" },
+  { id: 'sl4', authorId: 'u2', text: "The best resource for web dev: https://developer.mozilla.org/", timestamp: "2022-01-20T09:15:00Z" }
+];
+
 const STORY_MESSAGES = [
   { id: 'p1', authorId: 'u2', text: "ugh", timestamp: "2026-05-26T08:11:00Z" },
   { id: 'p2', authorId: 'u2', text: "they took a pic of me", timestamp: "2026-05-26T08:11:10Z" },
@@ -121,7 +129,7 @@ const STORY_MESSAGES = [
   { id: 'r2', authorId: 'u2', text: "i hope i get to see you again soon\ni keep wondering what's happening there right now", timestamp: "2026-05-26T08:33:00Z" },
   { id: 'r3', authorId: 'u2', text: "i miss you so much already", timestamp: "2026-05-26T08:35:00Z" },
   { id: 'r4', authorId: 'u2', text: "gonna see what there is to eat\nlooks like upma\ni'll skip it\nbiscuits are fine", timestamp: "2026-05-26T08:37:00Z" },
-  { id: 'r5', authorId: 'u2', text: "i can still feel us kissing\ it feels so good\ni don't even want to eat right now\ni just want to hold onto that feeling a little longer", timestamp: "2026-05-26T08:39:00Z" },
+  { id: 'r5', authorId: 'u2', text: "i can still feel us kissing\n it feels so good\ni don't even want to eat right now\ni just want to hold onto that feeling a little longer", timestamp: "2026-05-26T08:39:00Z" },
   { id: 'r6', authorId: 'u2', text: "just waiting for your text\ni'll put on lost soul and sit with it", timestamp: "2026-05-26T08:41:00Z" },
   { id: 'r7', authorId: 'u2', text: "i love you so much\ni really hope you're safe and sound 🍀", timestamp: "2026-05-26T08:43:00Z" },
   { id: 'r8', authorId: 'u2', text: "i can still sense you\nstill smell you\nit's everywhere 💖", timestamp: "2026-05-26T08:46:00Z" },
@@ -249,6 +257,13 @@ export default function App() {
   // --- FIREBASE: FETCH MESSAGES REAL-TIME (LOCAL SORT) ---
   useEffect(() => {
     if (!isLoggedIn) return;
+    
+    if (activeChannelId === 'c2') {
+       setMessages(STUDY_LINKS_MESSAGES);
+       setIsLoading(false);
+       return;
+    }
+
     setIsLoading(true);
 
     const q = query(
@@ -257,7 +272,7 @@ export default function App() {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (snapshot.empty) {
+      if (snapshot.empty && activeChannelId === 'c1') {
         seedDatabase();
       } else {
         const msgs = snapshot.docs.map(doc => ({
@@ -321,6 +336,7 @@ export default function App() {
   };
 
   const handleSendMessage = async (e) => {
+    if (activeChannelId === 'c2') return; // Disable sending in study-links
     if (e.key === 'Enter' && newMessage.trim()) {
       try {
         await addDoc(collection(db, "messages"), {
@@ -337,7 +353,7 @@ export default function App() {
   };
 
   const handleEditMessage = async () => {
-    if (!editMessageText.trim()) return;
+    if (!editMessageText.trim() || activeChannelId === 'c2') return;
     try {
       await updateDoc(doc(db, "messages", editingMessageId), { text: editMessageText });
       setEditingMessageId(null);
@@ -347,6 +363,7 @@ export default function App() {
   };
 
   const handleDeleteMessage = async (messageId) => {
+    if (activeChannelId === 'c2') return;
     try {
       await deleteDoc(doc(db, "messages", messageId));
       setContextMenu(null);
@@ -473,7 +490,6 @@ export default function App() {
                       <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="More"><MoreHorizontal size={18} /></button>
                     </div>
                     
-                    {/* ENFORCED 56PX COLUMN */}
                     <div className="w-[56px] shrink-0 flex justify-center pt-0.5">
                       {isConsecutive ? (
                         <span className="text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 pt-1 select-none">{timeString}</span>
@@ -511,7 +527,7 @@ export default function App() {
         <div className="px-4 pb-6 pt-2 shrink-0">
           <div className="bg-[#383a40] rounded-lg flex items-center px-4 py-2.5">
             <button className="text-[#b5bac1] hover:text-[#dbdee1] mr-4"><Plus size={24} className="bg-[#4e5058] rounded-full p-1" /></button>
-            <input type="text" placeholder={`Message #${activeChannel.name}`} className="bg-transparent outline-none flex-1 text-[#dbdee1] placeholder-[#949ba4]" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleSendMessage} />
+            <input type="text" placeholder={activeChannelId === 'c2' ? "You do not have permission to send messages in this channel." : `Message #${activeChannel.name}`} disabled={activeChannelId === 'c2'} className="bg-transparent outline-none flex-1 text-[#dbdee1] placeholder-[#949ba4] disabled:cursor-not-allowed" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleSendMessage} />
             <div className="flex items-center text-[#b5bac1] gap-3 ml-2">
               <button className="hover:text-[#dbdee1]"><Gift size={20} /></button>
               <button className="hover:text-[#dbdee1]"><Sticker size={20} /></button>
@@ -523,7 +539,7 @@ export default function App() {
 
       {contextMenu && (
         <div className="fixed bg-[#111214] border border-[#1e1f22] shadow-xl rounded w-48 py-1.5 z-50 text-[#b5bac1] text-sm font-medium" style={{ left: contextMenu.x, top: contextMenu.y }} onClick={(e) => e.stopPropagation()}>
-          <div className="px-3 py-1.5 hover:bg-[#4752c4] hover:text-white cursor-pointer flex items-center justify-between mx-1 rounded-sm group transition-colors" onClick={() => { setEditingMessageId(contextMenu.message.id); setEditMessageText(contextMenu.message.text); setContextMenu(null); }}>
+          <div className="px-3 py-1.5 hover:bg-[#4752c4] hover:text-white cursor-pointer flex items-center justify-between mx-1 rounded-sm group transition-colors" onClick={() => { if(activeChannelId==='c2') return; setEditingMessageId(contextMenu.message.id); setEditMessageText(contextMenu.message.text); setContextMenu(null); }}>
             <span>Edit Message</span><Pencil size={14} className="opacity-80 group-hover:opacity-100" />
           </div>
           <div className="h-px bg-[#2b2d31] my-1 mx-2"></div>
