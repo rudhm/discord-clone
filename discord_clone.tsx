@@ -42,7 +42,7 @@ const initialData = {
     {
       id: 's1',
       name: 'Rise togetherr',
-      icon: 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=128&h=128&fit=crop',
+      icon: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=128&h=128&fit=crop',
       unread: false,
       channels: [
         { id: 'c1', name: 'general-chat', type: 'text' },
@@ -404,7 +404,7 @@ export default function DiscordClone() {
           <Tooltip key={server.id} text={server.name}>
             <div className="relative flex items-center justify-center w-full group cursor-pointer" onClick={() => { setActiveServerId(server.id); setActiveChannelId(server.channels[0].id); }}>
               <div className={`absolute left-0 w-1 bg-white rounded-r-full transition-all duration-300 origin-left ${activeServerId === server.id ? 'h-10 scale-100' : 'h-2 scale-0 group-hover:scale-100 group-hover:h-5'}`}></div>
-              <img src={server.icon} alt={server.name} className={`w-12 h-12 transition-all duration-300 bg-[#313338] ${activeServerId === server.id ? 'rounded-[16px]' : 'rounded-[24px] group-hover:rounded-[16px]'}`} />
+              <img src={server.icon} alt={server.name} className={`w-12 h-12 transition-all duration-300 bg-[#313338] object-cover ${activeServerId === server.id ? 'rounded-[16px]' : 'rounded-full group-hover:rounded-[16px]'}`} />
             </div>
           </Tooltip>
         ))}
@@ -417,9 +417,9 @@ export default function DiscordClone() {
       </div>
 
       <div className="w-[240px] bg-[#2b2d31] shrink-0 flex flex-col z-10">
-        <div className="h-12 border-b border-[#1f2023] shadow-sm flex items-center justify-between px-4 hover:bg-[#35373c] cursor-pointer transition-colors">
-          <h1 className="font-bold text-[#f2f3f5] truncate">{activeServer.name}</h1>
-          <ChevronDown size={18} className="text-[#dbdee1]" />
+        <div className="h-12 border-b border-[#1f2023] shadow-sm flex items-center px-4 hover:bg-[#35373c] cursor-pointer transition-colors min-w-0 group">
+          <h1 className="font-bold text-[#f2f3f5] truncate text-[15px] flex-1 leading-[18px]">{activeServer.name}</h1>
+          <ChevronDown size={18} className="text-[#dbdee1] shrink-0 ml-1 opacity-80 group-hover:opacity-100 transition-opacity" />
         </div>
         <div className="flex-1 overflow-y-auto custom-scrollbar p-2 mt-2">
           {activeServer.channels.map(channel => (
@@ -432,7 +432,7 @@ export default function DiscordClone() {
         <div className="h-[52px] bg-[#232428] flex items-center px-2 shrink-0 mt-auto">
           <div className="flex items-center hover:bg-[#3f4147] p-1 -ml-1 rounded cursor-pointer transition-colors flex-1 min-w-0 mr-1 group">
             <div className="relative">
-              <img src={currentUser.avatar} alt="Avatar" className="w-8 h-8 rounded-full" />
+              <img src={currentUser.avatar} alt="Avatar" className="w-8 h-8 rounded-full object-cover" />
               <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[#23a559] border-2 border-[#232428] rounded-full group-hover:border-[#3f4147] transition-colors"></div>
             </div>
             <div className="ml-2 truncate">
@@ -495,7 +495,7 @@ export default function DiscordClone() {
                       {isConsecutive ? (
                         <span className="text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 pt-1 select-none cursor-default">{timeString}</span>
                       ) : (
-                        <img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 bg-gray-700 mt-0.5" />
+                        <img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 bg-gray-700 mt-0.5 object-cover" />
                       )}
                     </div>
                     
