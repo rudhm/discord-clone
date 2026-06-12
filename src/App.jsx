@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import Login from './Login.jsx';
+import Login from './src/Login.jsx';
 import { 
   Hash, Volume2, Settings, Plus, Mic, Headphones, 
   Search, Bell, Pin, Users, Inbox, HelpCircle, 
@@ -10,7 +10,7 @@ import {
 import { initializeApp } from "firebase/app";
 import { 
   getFirestore, collection, addDoc, onSnapshot, 
-  query, orderBy, serverTimestamp, doc, updateDoc, deleteDoc, where, writeBatch
+  query, serverTimestamp, doc, updateDoc, deleteDoc, where, writeBatch
 } from "firebase/firestore";
 
 // --- FIREBASE CONFIG ---
@@ -52,7 +52,6 @@ const initialData = {
   ]
 };
 
-// --- THE STORY DATA (For Seeding) ---
 const STORY_MESSAGES = [
   { id: 'p1', authorId: 'u2', text: "ugh", timestamp: "2026-05-26T08:11:00Z" },
   { id: 'p2', authorId: 'u2', text: "they took a pic of me", timestamp: "2026-05-26T08:11:10Z" },
@@ -81,7 +80,7 @@ const STORY_MESSAGES = [
   { id: 'p25', authorId: 'u1', text: "😭", timestamp: "2026-05-26T08:19:00Z" },
   { id: 'p26', authorId: 'u2', text: "instead we're here\nyou're at a park scared to go home\nand i'm on a footpath feeling like i ruined your day", timestamp: "2026-05-26T08:19:25Z" },
   { id: 'p27', authorId: 'u1', text: "you didn't ruin anything", timestamp: "2026-05-26T08:19:40Z" },
-  { id: 'p28', authorId: 'u2', text: "has i anyone called you yet?", timestamp: "2026-05-26T08:20:00Z" },
+  { id: 'p28', authorId: 'u2', text: "has anyone called you yet?", timestamp: "2026-05-26T08:20:00Z" },
   { id: 'p29', authorId: 'u1', text: "nope\nnothing so far", timestamp: "2026-05-26T08:20:15Z" },
   { id: 'p30', authorId: 'u2', text: "okay good\nplease tell me the moment something happens\n\ni feel so guilty sitting here doing nothing", timestamp: "2026-05-26T08:20:40Z" },
   { id: 'p31', authorId: 'u1', text: "i will i will\nstop overthinking", timestamp: "2026-05-26T08:21:00Z" },
@@ -247,15 +246,14 @@ export default function App() {
     return () => window.removeEventListener('click', handleClick);
   }, []);
 
-  // --- FIREBASE: FETCH MESSAGES REAL-TIME ---
+  // --- FIREBASE: FETCH MESSAGES REAL-TIME (LOCAL SORT) ---
   useEffect(() => {
     if (!isLoggedIn) return;
     setIsLoading(true);
 
     const q = query(
       collection(db, "messages"),
-      where("channelId", "==", activeChannelId),
-      orderBy("timestamp", "asc")
+      where("channelId", "==", activeChannelId)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -264,17 +262,21 @@ export default function App() {
         ...doc.data(),
         timestamp: doc.data().timestamp?.toDate()?.toISOString() || new Date().toISOString()
       }));
+      
+      // Sort locally to avoid Composite Index requirement
+      msgs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      
       setMessages(msgs);
       setIsLoading(false);
     }, (error) => {
       console.error("Firestore error:", error);
+      alert("Firestore Error: " + error.message);
       setIsLoading(false);
     });
 
     return () => unsubscribe();
   }, [activeChannelId, isLoggedIn]);
 
-  // --- SEED DATABASE FUNCTION ---
   const seedDatabase = async () => {
     if (isSeeding) return;
     setIsSeeding(true);
@@ -329,7 +331,7 @@ export default function App() {
         setNewMessage('');
       } catch (error) {
         console.error("Send error:", error);
-        alert("Check Firebase Rules! Error: " + error.message);
+        alert("Send failed! " + error.message + "\n\nMake sure Rules are set to 'allow read, write: if true;'");
       }
     }
   };
@@ -355,9 +357,7 @@ export default function App() {
 
   const handleScroll = (e) => {
     const { scrollTop } = e.target;
-    if (scrollTop === 0 && messages.length > 0) {
-      // Logic for infinite scroll would go here
-    }
+    if (scrollTop === 0 && messages.length > 0) {}
   };
 
   const Tooltip = ({ children, text }) => (
@@ -401,7 +401,7 @@ export default function App() {
 
       <div className="w-[240px] bg-[#2b2d31] shrink-0 flex flex-col z-10">
         <div className="h-12 border-b border-[#1f2023] shadow-sm flex items-center justify-between px-4 hover:bg-[#35373c] cursor-pointer transition-colors">
-          <div className="flex-1 min-w-0 truncate text-[15px] font-semibold text-[#f2f3f5]">{activeServer.name}</div>
+          <h1 className="font-bold text-[#f2f3f5] truncate">{activeServer.name}</h1>
           <ChevronDown size={18} className="text-[#dbdee1]" />
         </div>
         <div className="flex-1 overflow-y-auto custom-scrollbar p-2 mt-2">
@@ -424,27 +424,17 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center text-[#b5bac1]">
-            <button 
-              onClick={seedDatabase} 
-              disabled={isSeeding} 
-              className="p-1.5 hover:bg-[#3f4147] rounded hover:text-[#dbdee1] transition-colors" 
-              title="Restore Story to Cloud"
-            >
+            <button onClick={seedDatabase} disabled={isSeeding} className="p-1.5 hover:bg-[#3f4147] rounded hover:text-[#dbdee1] transition-colors" title="Restore Story to Cloud">
               {isSeeding ? <Loader2 size={18} className="animate-spin" /> : <RefreshCcw size={18} />}
             </button>
-            <button 
-              onClick={handleLogout} 
-              disabled={isLoggingOut} 
-              className="p-1.5 hover:bg-[#3b3d44] hover:text-[#f23f43] rounded transition-colors disabled:opacity-50" 
-              title="Log Out"
-            >
+            <button onClick={handleLogout} disabled={isLoggingOut} className="p-1.5 hover:bg-[#3b3d44] hover:text-[#f23f43] rounded transition-colors disabled:opacity-50" title="Log Out">
               {isLoggingOut ? <Loader2 size={18} className="animate-spin" /> : <LogOut size={18} />}
             </button>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 bg-[#313338] flex flex-col items-stretch min-w-0">
+      <div className="flex-1 bg-[#313338] flex flex-col min-w-0">
         <div className="h-12 border-b border-[#1f2023] shadow-sm flex items-center px-4 shrink-0">
           <Hash size={24} className="text-[#80848e] mr-2" />
           <h2 className="font-bold text-[#f2f3f5] mr-4">{activeChannel.name}</h2>
@@ -455,7 +445,7 @@ export default function App() {
           </div>
         </div>
 
-        <div className="flex-1 w-full overflow-y-auto custom-scrollbar px-4 pt-4 pb-2 text-left flex flex-col items-stretch" ref={scrollContainerRef} onScroll={handleScroll}>
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-4 pt-4 pb-2" ref={scrollContainerRef} onScroll={handleScroll}>
           {isLoading && (
             <div className="flex justify-center py-4 shrink-0">
               <Loader2 className="animate-spin text-[#949ba4]" size={24} />
@@ -485,16 +475,16 @@ export default function App() {
                     <div className="flex-1 h-px bg-[#3f4147]"></div>
                   </div>
                 )}
-                <div className={`flex w-full items-start self-stretch group hover:bg-[#2e3035] -mx-4 px-4 py-0.5 relative text-left ${isConsecutive ? 'mt-0' : 'mt-4'}`}
+                <div className={`flex items-start group hover:bg-[#2e3035] -mx-4 px-4 py-0.5 relative ${isConsecutive ? 'mt-0' : 'mt-4'}`}
                      onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, message: msg }); }}>
                   <div className="absolute top-0 right-4 -mt-3.5 bg-[#313338] border border-[#1e1f22] rounded shadow-sm flex items-center opacity-0 group-hover:opacity-100 transition-opacity z-10 overflow-hidden">
-                    <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors"><Smile size={18} /></button>
-                    <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors"><Reply size={18} /></button>
-                    <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors"><MoreHorizontal size={18} /></button>
+                    <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="Add Reaction"><Smile size={18} /></button>
+                    <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="Reply"><Reply size={18} /></button>
+                    <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="More"><MoreHorizontal size={18} /></button>
                   </div>
-                  {isConsecutive ? (<div className="w-10 shrink-0 text-center opacity-0 group-hover:opacity-100 flex items-center justify-center pt-1"><span className="text-[10px] text-gray-400">{timeString}</span></div>) 
-                  : (<img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 shrink-0 bg-gray-700" />)}
-                  <div className="ml-2 flex flex-1 min-w-0 w-full flex-col text-left">
+                  {isConsecutive ? (<div className="w-10 mr-4 shrink-0 text-center opacity-0 group-hover:opacity-100 flex items-center justify-center pt-1"><span className="text-[10px] text-gray-400">{timeString}</span></div>) 
+                  : (<img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 mt-0.5 shrink-0 bg-gray-700" />)}
+                  <div className="ml-2 flex-1 min-w-0">
                     {!isConsecutive && (<div className="flex items-baseline mb-0"><span className="font-medium text-[#f2f3f5] mr-2 hover:underline cursor-pointer">{author.name}</span><span className="text-xs text-[#949ba4]">{timeString}</span></div>)}
                     {editingMessageId === msg.id ? (
                       <div className="mt-1 mb-1 pr-12">
@@ -503,7 +493,7 @@ export default function App() {
                         </div>
                         <div className="text-xs text-[#949ba4] mt-1">escape to <span className="text-[#00a8fc] cursor-pointer hover:underline" onClick={() => setEditingMessageId(null)}>cancel</span> • enter to <span className="text-[#00a8fc] cursor-pointer hover:underline" onClick={handleEditMessage}>save</span></div>
                       </div>
-                    ) : (<div><p className="text-left text-[#dbdee1] leading-relaxed break-words whitespace-pre-wrap">{msg.text}</p></div>)}
+                    ) : (<div><p className="text-[#dbdee1] leading-relaxed break-words whitespace-pre-wrap">{msg.text}</p></div>)}
                   </div>
                 </div>
               </React.Fragment>
