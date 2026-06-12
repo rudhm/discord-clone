@@ -52,7 +52,6 @@ const initialData = {
   ]
 };
 
-// --- STATIC STUDY LINKS (YEARS OLD) ---
 const STUDY_LINKS_MESSAGES = [
   { id: 'sl1', authorId: 'u2', text: "Python docs for our project: https://docs.python.org/3/", timestamp: "2019-11-05T16:45:00Z" },
   { id: 'sl2', authorId: 'u2', text: "MIT free course on CS if you're interested: https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/", timestamp: "2020-03-10T14:30:00Z" },
@@ -73,7 +72,7 @@ const STORY_MESSAGES = [
   { id: 'p10', authorId: 'u2', text: "the way he was talking to you tho\ni didn't like it\n\nfelt so rude\nyou didn't do anything wrong and he was just—\nidk it bothered me a lot", timestamp: "2026-05-26T08:14:10Z" },
   { id: 'p11', authorId: 'u1', text: "it's okay\nhe was just doing his job i guess", timestamp: "2026-05-26T08:14:25Z" },
   { id: 'p12', authorId: 'u2', text: "no i get that but still\nthe tone wasn't needed\nyou're not a criminal", timestamp: "2026-05-26T08:14:45Z" },
-  { id: 'p13', authorId: 'u1', text: "i should've said you're a stranger 😭\n\nanyway i called mom after\nshe picked up and was like\ni didn't call you?\n\nso they came on their own\nthe guards did", timestamp: "2026-05-26T08:15:10Z" },
+  { id: 'p13', authorId: 'u1', text: "i should've said you're a stranger 😭\n\nanyway i called mom after\nshe picked up and was like\ i didn't call you?\n\nso they came on their own\nthe guards did", timestamp: "2026-05-26T08:15:10Z" },
   { id: 'p14', authorId: 'u2', text: "they went to your house??", timestamp: "2026-05-26T08:15:25Z" },
   { id: 'p15', authorId: 'u1', text: "no no i'm at the park still\ni don't want to go home just yet\n\nit's a very restricted community man 👍", timestamp: "2026-05-26T08:15:45Z" },
   { id: 'p16', authorId: 'u2', text: "have they talked to anyone inside your house?", timestamp: "2026-05-26T08:16:00Z" },
@@ -391,6 +390,30 @@ export default function App() {
     return <Login onLogin={() => setIsLoggedIn(true)} />;
   }
 
+  // --- GROUP MESSAGES FOR DISCORD LAYOUT ---
+  const groupedMessages = [];
+  messages.forEach((msg) => {
+    const lastGroup = groupedMessages[groupedMessages.length - 1];
+    const msgDate = new Date(msg.timestamp);
+    const prevDate = lastGroup ? new Date(lastGroup.timestamp) : null;
+    const isDateChange = !lastGroup || msgDate.toDateString() !== prevDate?.toDateString();
+    
+    // Discord logic: same author, same day, and within 5 minutes
+    const isConsecutive = !isDateChange && lastGroup && lastGroup.authorId === msg.authorId && (msgDate - prevDate < 300000);
+
+    if (isConsecutive) {
+      lastGroup.items.push(msg);
+      // Keep group timestamp updated to the latest for next comparison? 
+      // Actually Discord uses the first message of the group as base.
+    } else {
+      groupedMessages.push({
+        ...msg,
+        items: [msg],
+        isDateChange
+      });
+    }
+  });
+
   return (
     <div className="flex h-screen w-full bg-[#1e1f22] text-[#dbdee1] font-sans overflow-hidden">
       <div className="w-[72px] bg-[#1e1f22] shrink-0 flex flex-col items-center py-3 z-20">
@@ -417,7 +440,7 @@ export default function App() {
       </div>
 
       <div className="w-[240px] bg-[#2b2d31] shrink-0 flex flex-col z-10">
-        <div className="h-12 border-b border-[#1f2023] shadow-sm flex items-center px-4 hover:bg-[#35373c] cursor-pointer transition-colors min-w-0 group">
+        <div className="h-12 border-b border-[#1f2023] shadow-sm flex items-center justify-between px-4 hover:bg-[#35373c] cursor-pointer transition-colors min-w-0 group">
           <h1 className="font-bold text-[#f2f3f5] truncate text-[15px] flex-1 leading-[18px]">{activeServer.name}</h1>
           <ChevronDown size={18} className="text-[#dbdee1] shrink-0 ml-1 opacity-80 group-hover:opacity-100 transition-opacity" />
         </div>
@@ -465,63 +488,61 @@ export default function App() {
                <div className="w-12 h-12 rounded-full border-4 border-[#313338] border-t-[#5865f2] animate-spin mb-4"></div>
             </div>
           ) : (
-            messages.map((msg, index) => {
-              const author = mockUsers.find(u => u.id === msg.authorId) || currentUser;
-              const prevMsg = index > 0 ? messages[index-1] : null;
-              const msgDate = new Date(msg.timestamp);
-              const prevDate = prevMsg ? new Date(prevMsg.timestamp) : null;
+            groupedMessages.map((group, gIndex) => {
+              const author = mockUsers.find(u => u.id === group.authorId) || currentUser;
+              const msgDate = new Date(group.timestamp);
               
-              // Ensure showDateDivider is consistent and correct
-              const showDateDivider = index === 0 || msgDate.toDateString() !== prevDate?.toDateString();
-              
-              // Discord grouping logic: same author and within 5 minutes
-              const isConsecutive = !showDateDivider && prevMsg && prevMsg.authorId === msg.authorId && (msgDate - prevDate < 300000); 
-              
-              const timeString = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
               return (
-                <React.Fragment key={msg.id}>
-                  {showDateDivider && (
+                <React.Fragment key={group.id}>
+                  {group.isDateChange && (
                     <div className="flex items-center mt-[1.0625rem] mb-2 mx-4 pointer-events-none select-none">
                       <div className="flex-1 h-px bg-[#3f4147]"></div>
                       <span className="px-3 text-[11px] font-semibold text-[#949ba4] uppercase tracking-wider">{msgDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                       <div className="flex-1 h-px bg-[#3f4147]"></div>
                     </div>
                   )}
-                  <div className={`flex items-start group hover:bg-[#2e3035] -mx-4 px-4 py-[0.125rem] relative ${isConsecutive ? 'mt-0' : 'mt-[1.0625rem]'}`}
-                       onContextMenu={(e) => { e.preventDefault(); if(activeChannelId==='c2') return; setContextMenu({ x: e.clientX, y: e.clientY, message: msg }); }}>
-                    <div className="absolute top-0 right-4 -mt-3.5 bg-[#313338] border border-[#1e1f22] rounded shadow-sm flex items-center opacity-0 group-hover:opacity-100 transition-opacity z-10 overflow-hidden">
-                      <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="Add Reaction"><Smile size={18} /></button>
-                      <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="Reply"><Reply size={18} /></button>
-                      <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="More"><MoreHorizontal size={18} /></button>
+                  
+                  {/* MAGIC FIX: Wrapper with items-start and gap-4 */}
+                  <div className="flex items-start gap-4 px-4 py-[0.125rem] mt-[1.0625rem] group hover:bg-[#2e3035] -mx-4">
+                    <div className="w-10 shrink-0 ml-2">
+                       <img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full object-cover mt-0.5 bg-gray-700" />
                     </div>
                     
-                    {/* SHIFTED PFP LEFT */}
-                    <div className="w-[48px] shrink-0 flex justify-start pt-0.5 ml-2">
-                      {isConsecutive ? (
-                        <span className="text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 pt-1 select-none cursor-default">{timeString}</span>
-                      ) : (
-                        <img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 bg-gray-700 mt-0.5 object-cover" />
-                      )}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      {!isConsecutive && (
-                        <div className="flex items-baseline mb-0 leading-tight">
-                          <span className="font-medium text-[#f2f3f5] mr-2 hover:underline cursor-pointer">{author.name}</span>
-                          <span className="text-[10px] text-[#949ba4] select-none">{timeString}</span>
-                        </div>
-                      )}
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <div className="flex items-baseline leading-tight">
+                        <span className="font-bold text-[#f2f3f5] mr-2 hover:underline cursor-pointer">{author.name}</span>
+                        <span className="text-[10px] text-[#949ba4] select-none">{msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
                       
-                      {editingMessageId === msg.id ? (
-                        <div className="mt-1 mb-1 pr-12">
-                          <div className="bg-[#383a40] rounded-lg flex flex-col px-3 py-2 w-full">
-                            <input type="text" value={editMessageText} onChange={(e) => setEditMessageText(e.target.value)} className="bg-transparent outline-none text-[#dbdee1] w-full text-sm" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleEditMessage(); else if (e.key === 'Escape') setEditingMessageId(null); }} />
-                          </div>
-                          <div className="text-xs text-[#949ba4] mt-1">escape to <span className="text-[#00a8fc] cursor-pointer hover:underline" onClick={() => setEditingMessageId(null)}>cancel</span> • enter to <span className="text-[#00a8fc] cursor-pointer hover:underline" onClick={handleEditMessage}>save</span></div>
-                        </div>
-                      ) : (
-                        <p className="m-0 p-0 text-[#dbdee1] leading-[22px] break-words whitespace-pre-wrap">{msg.text}</p>
-                      )}
+                      <div className="flex flex-col gap-[2px]">
+                        {group.messages.map((msg, mIndex) => {
+                          const isHeader = mIndex === 0;
+                          return (
+                            <div key={msg.id} className="relative group/msg" onContextMenu={(e) => { e.preventDefault(); if(activeChannelId==='c2') return; setContextMenu({ x: e.clientX, y: e.clientY, message: msg }); }}>
+                              {editingMessageId === msg.id ? (
+                                <div className="mt-1 mb-1 pr-12">
+                                  <div className="bg-[#383a40] rounded-lg flex flex-col px-3 py-2 w-full">
+                                    <input type="text" value={editMessageText} onChange={(e) => setEditMessageText(e.target.value)} className="bg-transparent outline-none text-[#dbdee1] w-full text-sm" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleEditMessage(); else if (e.key === 'Escape') setEditingMessageId(null); }} />
+                                  </div>
+                                  <div className="text-xs text-[#949ba4] mt-1">escape to <span className="text-[#00a8fc] cursor-pointer hover:underline" onClick={() => setEditingMessageId(null)}>cancel</span> • enter to <span className="text-[#00a8fc] cursor-pointer hover:underline" onClick={handleEditMessage}>save</span></div>
+                                </div>
+                              ) : (
+                                <div className="flex items-start">
+                                  {/* Subsequent messages time hover (optional layout logic) */}
+                                  <p className="m-0 p-0 text-[#dbdee1] leading-[22px] break-words whitespace-pre-wrap flex-1">{msg.text}</p>
+                                </div>
+                              )}
+                              
+                              {/* Hover actions for every message */}
+                              <div className="absolute -top-4 right-0 bg-[#313338] border border-[#1e1f22] rounded shadow-sm flex items-center opacity-0 group-hover/msg:opacity-100 transition-opacity z-10 overflow-hidden scale-90 origin-right">
+                                <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="Add Reaction"><Smile size={16} /></button>
+                                <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="Reply"><Reply size={16} /></button>
+                                <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="More"><MoreHorizontal size={16} /></button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 </React.Fragment>
