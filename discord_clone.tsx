@@ -41,7 +41,7 @@ const initialData = {
   servers: [
     {
       id: 's1',
-      name: 'rise together',
+      name: 'Rise togetherr',
       icon: 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=128&h=128&fit=crop',
       unread: false,
       channels: [
