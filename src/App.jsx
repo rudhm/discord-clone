@@ -51,12 +51,12 @@ const initialData = {
     }
   ]
 };
-
+// --- STATIC STUDY LINKS (YEARS OLD) ---
 const STUDY_LINKS_MESSAGES = [
-  { id: 'sl1', authorId: 'u2', text: "Python docs for our project: https://docs.python.org/3/", timestamp: "2019-11-05T16:45:00Z" },
-  { id: 'sl2', authorId: 'u2', text: "MIT free course on CS if you're interested: https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/", timestamp: "2020-03-10T14:30:00Z" },
-  { id: 'sl3', authorId: 'u2', text: "Found this Calculus course, really helpful for next semester: https://www.khanacademy.org/math/calculus-1", timestamp: "2021-09-15T10:00:00Z" },
-  { id: 'sl4', authorId: 'u2', text: "The best resource for web dev: https://developer.mozilla.org/", timestamp: "2022-01-20T09:15:00Z" }
+  { id: 'sl1', authorId: 'u2', text: "Found this amazing site for any subject, classes 8-12: https://www.khanacademy.org/", timestamp: "2019-10-12T14:20:00Z" },
+  { id: 'sl2', authorId: 'u2', text: "Best YouTube channel for history and science explainers: https://thecrashcourse.com/", timestamp: "2020-04-05T11:15:00Z" },
+  { id: 'sl3', authorId: 'u2', text: "If you need to memorize terms or formulas, use this: https://quizlet.com/", timestamp: "2021-01-20T16:45:00Z" },
+  { id: 'sl4', authorId: 'u2', text: "For math and chemistry problem solving: https://www.wolframalpha.com/", timestamp: "2022-05-14T09:30:00Z" }
 ];
 
 const STORY_MESSAGES = [
