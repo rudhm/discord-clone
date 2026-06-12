@@ -42,7 +42,7 @@ const initialData = {
     {
       id: 's1',
       name: 'Rise togetherr',
-      icon: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=128&h=128&fit=crop',
+      icon: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=128&h=128&fit=crop',
       unread: false,
       channels: [
         { id: 'c1', name: 'general-chat', type: 'text' },
