@@ -28,13 +28,13 @@ const db = getFirestore(firebaseApp);
 
 const currentUser = {
   id: 'u1',
-  name: 'wifey 🤍',
+  name: 'Hasii',
   avatar: '/Hasi.jpg',
   status: 'online'
 };
 
 const mockUsers = [
-  { id: 'u2', name: 'rudh', avatar: '/Anirudh.jpg', status: 'online' }
+  { id: 'u2', name: 'Anirudh', avatar: '/Anirudh.jpg', status: 'online' }
 ];
 
 const initialData = {
@@ -439,9 +439,8 @@ export default function App() {
         </div>
       </div>
 
-      <div className="w-[240px] bg-[#2b2d31] shrink-0 flex flex-col z-10">
         <div className="h-12 border-b border-[#1f2023] shadow-sm flex items-center justify-between px-4 hover:bg-[#35373c] cursor-pointer transition-colors min-w-0 group">
-          <h1 className="font-bold text-[#f2f3f5] truncate text-[15px] flex-1 leading-[18px]">{activeServer.name}</h1>
+          <h1 className="font-bold text-[#f2f3f5] truncate text-[17px] flex-1 leading-[20px]">{activeServer.name}</h1>
           <ChevronDown size={18} className="text-[#dbdee1] shrink-0 ml-1 opacity-80 group-hover:opacity-100 transition-opacity" />
         </div>
         <div className="flex-1 overflow-y-auto custom-scrollbar p-2 mt-2">
