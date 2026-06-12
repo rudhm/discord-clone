@@ -395,7 +395,7 @@ export default function App() {
     <div className="flex h-screen w-full bg-[#1e1f22] text-[#dbdee1] font-sans overflow-hidden">
       <div className="w-[72px] bg-[#1e1f22] shrink-0 flex flex-col items-center py-3 z-20">
         <Tooltip text="Direct Messages">
-          <div className="relative group cursor-pointer w-12 h-12 bg-[#313338] hover:bg-[#5865f2] rounded-[24px] hover:rounded-[16px] transition-all duration-300 flex items-center justify-center text-[#dbdee1] hover:text-white">
+          <div className="relative group cursor-pointer w-12 h-12 bg-[#313338] hover:bg-[#5865f2] rounded-full hover:rounded-[16px] transition-all duration-300 flex items-center justify-center text-[#dbdee1] hover:text-white">
             <svg width="28" height="20" viewBox="0 0 28 20" fill="currentColor"><path d="M23.0212 1.67671C21.3107 0.879656 19.5079 0.318797 17.6584 0C17.4062 0.461742 17.1749 0.934541 16.9708 1.4184C15.003 1.12145 12.9974 1.12145 11.0283 1.4184C10.819 0.934541 10.589 0.461744 10.3368 0C8.48074 0.318799 6.67795 0.88575 4.96746 1.68266C1.56727 6.77853 0.649666 11.7538 1.11108 16.652C3.10102 18.1418 5.3262 19.2743 7.69177 20C8.22338 19.2743 8.69519 18.4993 9.09812 17.691C8.32996 17.397 7.58522 17.0424 6.87684 16.6135C7.06531 16.4762 7.24726 16.3387 7.42403 16.1847C11.5911 18.1749 16.408 18.1749 20.5763 16.1847C20.7531 16.3332 20.9351 16.4762 21.1171 16.6135C20.41 17.0369 19.6639 17.3997 18.897 17.691C19.3052 18.4993 19.7718 19.2689 20.3086 20C22.6743 19.2743 24.8995 18.1418 26.8894 16.652C27.43 10.9731 25.9665 6.04728 23.0212 1.67671ZM9.68041 13.6383C8.39754 13.6383 7.34085 12.4453 7.34085 10.994C7.34085 9.54272 8.37155 8.34973 9.68041 8.34973C10.9893 8.34973 12.0395 9.54272 12.0187 10.994C12.0187 12.4453 10.9828 13.6383 9.68041 13.6383ZM18.3161 13.6383C17.0332 13.6383 15.9765 12.4453 15.9765 10.994C15.9765 9.54272 17.0072 8.34973 18.3161 8.34973C19.625 8.34973 20.6751 9.54272 20.6543 10.994C20.6543 12.4453 19.625 13.6383 18.3161 13.6383Z" /></svg>
           </div>
         </Tooltip>
@@ -404,26 +404,26 @@ export default function App() {
           <Tooltip key={server.id} text={server.name}>
             <div className="relative flex items-center justify-center w-full group cursor-pointer" onClick={() => { setActiveServerId(server.id); setActiveChannelId(server.channels[0].id); }}>
               <div className={`absolute left-0 w-1 bg-white rounded-r-full transition-all duration-300 origin-left ${activeServerId === server.id ? 'h-10 scale-100' : 'h-2 scale-0 group-hover:scale-100 group-hover:h-5'}`}></div>
-              <img src={server.icon} alt={server.name} className={`w-12 h-12 transition-all duration-300 bg-[#313338] ${activeServerId === server.id ? 'rounded-[16px]' : 'rounded-[24px] group-hover:rounded-[16px]'}`} />
+              <img src={server.icon} alt={server.name} className={`w-12 h-12 transition-all duration-300 bg-[#313338] ${activeServerId === server.id ? 'rounded-[16px]' : 'rounded-full group-hover:rounded-[16px]'}`} />
             </div>
           </Tooltip>
         ))}
-        <Tooltip text="Add a Server"><div className="group cursor-pointer w-12 h-12 bg-[#313338] hover:bg-[#23a559] rounded-[24px] hover:rounded-[16px] transition-all duration-300 flex items-center justify-center text-[#23a559] hover:text-white mb-2"><Plus size={24} /></div></Tooltip>
-        <Tooltip text="Explore Discoverable Servers"><div className="group cursor-pointer w-12 h-12 bg-[#313338] hover:bg-[#23a559] rounded-[24px] hover:rounded-[16px] transition-all duration-300 flex items-center justify-center text-[#23a559] hover:text-white"><Compass size={24} /></div></Tooltip>
+        <Tooltip text="Add a Server"><div className="group cursor-pointer w-12 h-12 bg-[#313338] hover:bg-[#23a559] rounded-full hover:rounded-[16px] transition-all duration-300 flex items-center justify-center text-[#23a559] hover:text-white mb-2"><Plus size={24} /></div></Tooltip>
+        <Tooltip text="Explore Discoverable Servers"><div className="group cursor-pointer w-12 h-12 bg-[#313338] hover:bg-[#23a559] rounded-full hover:rounded-[16px] transition-all duration-300 flex items-center justify-center text-[#23a559] hover:text-white"><Compass size={24} /></div></Tooltip>
         <div className="mt-auto mb-2 flex flex-col items-center gap-2">
            <div className="w-8 h-0.5 bg-[#3f4147] rounded-full"></div>
-           <Tooltip text="Download Apps"><div className="group cursor-pointer w-12 h-12 mt-1 hover:bg-[#313338] rounded-[24px] hover:rounded-[16px] transition-all duration-300 flex items-center justify-center text-[#23a559]"><Download size={24} /></div></Tooltip>
+           <Tooltip text="Download Apps"><div className="group cursor-pointer w-12 h-12 mt-1 hover:bg-[#313338] rounded-full hover:rounded-[16px] transition-all duration-300 flex items-center justify-center text-[#23a559]"><Download size={24} /></div></Tooltip>
         </div>
       </div>
 
       <div className="w-[240px] bg-[#2b2d31] shrink-0 flex flex-col z-10">
-        <div className="h-12 border-b border-[#1f2023] shadow-sm flex items-center justify-between px-4 hover:bg-[#35373c] cursor-pointer transition-colors">
-          <h1 className="font-bold text-[#f2f3f5] truncate">{activeServer.name}</h1>
-          <ChevronDown size={18} className="text-[#dbdee1]" />
+        <div className="h-12 border-b border-[#1f2023] shadow-sm flex items-center justify-between px-4 hover:bg-[#35373c] cursor-pointer transition-colors min-w-0">
+          <h1 className="font-bold text-[#f2f3f5] truncate text-base mr-2 flex-1">{activeServer.name}</h1>
+          <ChevronDown size={18} className="text-[#dbdee1] shrink-0" />
         </div>
         <div className="flex-1 overflow-y-auto custom-scrollbar p-2 mt-2">
           {activeServer.channels.map(channel => (
-            <div key={channel.id} onClick={() => setActiveChannelId(channel.id)} className={`flex items-center px-2 py-1.5 mb-0.5 rounded cursor-pointer group transition-colors ${activeChannelId === channel.id ? 'bg-[#404249] text-white' : 'text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]'}`}>
+            <div key={channel.id} onClick={() => setActiveChannelId(channel.id)} className={`flex items-center px-2 py-1.5 mb-0.5 rounded-[4px] cursor-pointer group transition-colors ${activeChannelId === channel.id ? 'bg-[#404249] text-white' : 'text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]'}`}>
               {channel.type === 'text' ? <Hash size={20} className="mr-1.5 opacity-70" /> : <Volume2 size={20} className="mr-1.5 opacity-70" />}
               <span className="font-medium truncate">{channel.name}</span>
             </div>
@@ -470,20 +470,25 @@ export default function App() {
               const prevMsg = index > 0 ? messages[index-1] : null;
               const msgDate = new Date(msg.timestamp);
               const prevDate = prevMsg ? new Date(prevMsg.timestamp) : null;
-              const showDateDivider = index === 0 || msgDate.getDate() !== prevDate?.getDate();
+              
+              // Ensure showDateDivider is consistent and correct
+              const showDateDivider = index === 0 || msgDate.toDateString() !== prevDate?.toDateString();
+              
+              // Discord grouping logic: same author and within 5 minutes
               const isConsecutive = !showDateDivider && prevMsg && prevMsg.authorId === msg.authorId && (msgDate - prevDate < 300000); 
+              
               const timeString = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
               return (
                 <React.Fragment key={msg.id}>
                   {showDateDivider && (
-                    <div className="flex items-center mt-6 mb-2 mx-4 pointer-events-none select-none">
+                    <div className="flex items-center mt-[1.0625rem] mb-2 mx-4 pointer-events-none select-none">
                       <div className="flex-1 h-px bg-[#3f4147]"></div>
                       <span className="px-3 text-[11px] font-semibold text-[#949ba4] uppercase tracking-wider">{msgDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                       <div className="flex-1 h-px bg-[#3f4147]"></div>
                     </div>
                   )}
-                  <div className={`flex items-start group hover:bg-[#2e3035] -mx-4 px-4 py-0.5 relative ${isConsecutive ? 'mt-0' : 'mt-4'}`}
-                       onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, message: msg }); }}>
+                  <div className={`flex items-start group hover:bg-[#2e3035] -mx-4 px-4 py-[0.125rem] relative ${isConsecutive ? 'mt-0' : 'mt-[1.0625rem]'}`}
+                       onContextMenu={(e) => { e.preventDefault(); if(activeChannelId==='c2') return; setContextMenu({ x: e.clientX, y: e.clientY, message: msg }); }}>
                     <div className="absolute top-0 right-4 -mt-3.5 bg-[#313338] border border-[#1e1f22] rounded shadow-sm flex items-center opacity-0 group-hover:opacity-100 transition-opacity z-10 overflow-hidden">
                       <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="Add Reaction"><Smile size={18} /></button>
                       <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="Reply"><Reply size={18} /></button>
@@ -492,9 +497,9 @@ export default function App() {
                     
                     <div className="w-[56px] shrink-0 flex justify-center pt-0.5">
                       {isConsecutive ? (
-                        <span className="text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 pt-1 select-none">{timeString}</span>
+                        <span className="text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 pt-1 select-none cursor-default">{timeString}</span>
                       ) : (
-                        <img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 bg-gray-700" />
+                        <img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 bg-gray-700 mt-0.5" />
                       )}
                     </div>
                     
@@ -502,7 +507,7 @@ export default function App() {
                       {!isConsecutive && (
                         <div className="flex items-baseline mb-0 leading-tight">
                           <span className="font-medium text-[#f2f3f5] mr-2 hover:underline cursor-pointer">{author.name}</span>
-                          <span className="text-xs text-[#949ba4]">{timeString}</span>
+                          <span className="text-[10px] text-[#949ba4] select-none">{timeString}</span>
                         </div>
                       )}
                       
@@ -539,7 +544,7 @@ export default function App() {
 
       {contextMenu && (
         <div className="fixed bg-[#111214] border border-[#1e1f22] shadow-xl rounded w-48 py-1.5 z-50 text-[#b5bac1] text-sm font-medium" style={{ left: contextMenu.x, top: contextMenu.y }} onClick={(e) => e.stopPropagation()}>
-          <div className="px-3 py-1.5 hover:bg-[#4752c4] hover:text-white cursor-pointer flex items-center justify-between mx-1 rounded-sm group transition-colors" onClick={() => { if(activeChannelId==='c2') return; setEditingMessageId(contextMenu.message.id); setEditMessageText(contextMenu.message.text); setContextMenu(null); }}>
+          <div className="px-3 py-1.5 hover:bg-[#4752c4] hover:text-white cursor-pointer flex items-center justify-between mx-1 rounded-sm group transition-colors" onClick={() => { setEditingMessageId(contextMenu.message.id); setEditMessageText(contextMenu.message.text); setContextMenu(null); }}>
             <span>Edit Message</span><Pencil size={14} className="opacity-80 group-hover:opacity-100" />
           </div>
           <div className="h-px bg-[#2b2d31] my-1 mx-2"></div>
