@@ -490,11 +490,12 @@ export default function DiscordClone() {
                       <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="More"><MoreHorizontal size={18} /></button>
                     </div>
                     
-                    <div className="w-[56px] shrink-0 flex justify-center pt-0.5">
+                    {/* SHIFTED PFP LEFT */}
+                    <div className="w-[48px] shrink-0 flex justify-start pt-0.5 ml-2">
                       {isConsecutive ? (
-                        <span className="text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 pt-1 select-none">{timeString}</span>
+                        <span className="text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 pt-1 select-none cursor-default">{timeString}</span>
                       ) : (
-                        <img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 bg-gray-700" />
+                        <img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 bg-gray-700 mt-0.5" />
                       )}
                     </div>
                     
