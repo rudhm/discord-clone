@@ -10,7 +10,7 @@ import {
 import { initializeApp } from "firebase/app";
 import { 
   getFirestore, collection, addDoc, onSnapshot, 
-  query, orderBy, serverTimestamp, doc, updateDoc, deleteDoc, where, writeBatch
+  query, serverTimestamp, doc, updateDoc, deleteDoc, where, writeBatch, setDoc, orderBy
 } from "firebase/firestore";
 
 // --- FIREBASE CONFIG ---
@@ -52,7 +52,6 @@ const initialData = {
   ]
 };
 
-// --- THE STORY DATA (For Seeding) ---
 const STORY_MESSAGES = [
   { id: 'p1', authorId: 'u2', text: "ugh", timestamp: "2026-05-26T08:11:00Z" },
   { id: 'p2', authorId: 'u2', text: "they took a pic of me", timestamp: "2026-05-26T08:11:10Z" },
@@ -81,7 +80,7 @@ const STORY_MESSAGES = [
   { id: 'p25', authorId: 'u1', text: "😭", timestamp: "2026-05-26T08:19:00Z" },
   { id: 'p26', authorId: 'u2', text: "instead we're here\nyou're at a park scared to go home\nand i'm on a footpath feeling like i ruined your day", timestamp: "2026-05-26T08:19:25Z" },
   { id: 'p27', authorId: 'u1', text: "you didn't ruin anything", timestamp: "2026-05-26T08:19:40Z" },
-  { id: 'p28', authorId: 'u2', text: "has anyone called you yet?", timestamp: "2026-05-26T08:20:00Z" },
+  { id: 'p28', authorId: 'u2', text: "has i anyone called you yet?", timestamp: "2026-05-26T08:20:00Z" },
   { id: 'p29', authorId: 'u1', text: "nope\nnothing so far", timestamp: "2026-05-26T08:20:15Z" },
   { id: 'p30', authorId: 'u2', text: "okay good\nplease tell me the moment something happens\n\ni feel so guilty sitting here doing nothing", timestamp: "2026-05-26T08:20:40Z" },
   { id: 'p31', authorId: 'u1', text: "i will i will\nstop overthinking", timestamp: "2026-05-26T08:21:00Z" },
@@ -247,25 +246,33 @@ export default function DiscordClone() {
     return () => window.removeEventListener('click', handleClick);
   }, []);
 
-  // --- FIREBASE: FETCH MESSAGES REAL-TIME ---
+  // --- FIREBASE: FETCH MESSAGES REAL-TIME (LOCAL SORT) ---
   useEffect(() => {
     if (!isLoggedIn) return;
     setIsLoading(true);
 
     const q = query(
       collection(db, "messages"),
-      where("channelId", "==", activeChannelId),
-      orderBy("timestamp", "asc")
+      where("channelId", "==", activeChannelId)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        timestamp: doc.data().timestamp?.toDate()?.toISOString() || new Date().toISOString()
-      }));
-      setMessages(msgs);
-      setIsLoading(false);
+      if (snapshot.empty) {
+        // Automatically restore if empty
+        seedDatabase();
+      } else {
+        const msgs = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          timestamp: doc.data().timestamp?.toDate()?.toISOString() || new Date().toISOString()
+        }));
+        
+        // Sort locally to avoid Composite Index requirement
+        msgs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        
+        setMessages(msgs);
+        setIsLoading(false);
+      }
     }, (error) => {
       console.error("Firestore error:", error);
       setIsLoading(false);
@@ -274,14 +281,16 @@ export default function DiscordClone() {
     return () => unsubscribe();
   }, [activeChannelId, isLoggedIn]);
 
-  // --- SEED DATABASE FUNCTION ---
+  // --- SEED DATABASE FUNCTION (IDEMPOTENT) ---
   const seedDatabase = async () => {
     if (isSeeding) return;
     setIsSeeding(true);
+    setIsLoading(true);
     try {
       const batch = writeBatch(db);
       STORY_MESSAGES.forEach((msg) => {
-        const docRef = doc(collection(db, "messages"));
+        // Use STORY_MESSAGES.id as the document ID to prevent duplicates!
+        const docRef = doc(db, "messages", msg.id);
         batch.set(docRef, {
           channelId: "c1",
           authorId: msg.authorId,
@@ -290,12 +299,12 @@ export default function DiscordClone() {
         });
       });
       await batch.commit();
-      alert("Story successfully uploaded to cloud!");
+      console.log("Story successfully uploaded to cloud.");
     } catch (error) {
       console.error("Seeding error:", error);
-      alert("Failed to seed: " + error.message);
     }
     setIsSeeding(false);
+    setIsLoading(false);
   };
 
   const scrollToBottom = () => {
@@ -329,7 +338,7 @@ export default function DiscordClone() {
         setNewMessage('');
       } catch (error) {
         console.error("Send error:", error);
-        alert("Check Firebase Rules! Error: " + error.message);
+        alert("Send failed! Check Firebase Console Rules.");
       }
     }
   };
@@ -355,9 +364,7 @@ export default function DiscordClone() {
 
   const handleScroll = (e) => {
     const { scrollTop } = e.target;
-    if (scrollTop === 0 && messages.length > 0) {
-      // Logic for infinite scroll would go here
-    }
+    if (scrollTop === 0 && messages.length > 0) {}
   };
 
   const Tooltip = ({ children, text }) => (
@@ -375,7 +382,7 @@ export default function DiscordClone() {
   }
 
   return (
-    <div className="fixed inset-0 flex h-screen w-screen bg-[#1e1f22] text-left text-[#dbdee1] font-sans overflow-hidden">
+    <div className="flex h-screen w-full bg-[#1e1f22] text-[#dbdee1] font-sans overflow-hidden">
       <div className="w-[72px] bg-[#1e1f22] shrink-0 flex flex-col items-center py-3 z-20">
         <Tooltip text="Direct Messages">
           <div className="relative group cursor-pointer w-12 h-12 bg-[#313338] hover:bg-[#5865f2] rounded-[24px] hover:rounded-[16px] transition-all duration-300 flex items-center justify-center text-[#dbdee1] hover:text-white">
@@ -401,7 +408,7 @@ export default function DiscordClone() {
 
       <div className="w-[240px] bg-[#2b2d31] shrink-0 flex flex-col z-10">
         <div className="h-12 border-b border-[#1f2023] shadow-sm flex items-center justify-between px-4 hover:bg-[#35373c] cursor-pointer transition-colors">
-          <div className="flex-1 min-w-0 truncate text-[15px] font-semibold text-[#f2f3f5]">{activeServer.name}</div>
+          <h1 className="font-bold text-[#f2f3f5] truncate">{activeServer.name}</h1>
           <ChevronDown size={18} className="text-[#dbdee1]" />
         </div>
         <div className="flex-1 overflow-y-auto custom-scrollbar p-2 mt-2">
@@ -424,27 +431,17 @@ export default function DiscordClone() {
             </div>
           </div>
           <div className="flex items-center text-[#b5bac1]">
-            <button 
-              onClick={seedDatabase} 
-              disabled={isSeeding} 
-              className="p-1.5 hover:bg-[#3f4147] rounded hover:text-[#dbdee1] transition-colors" 
-              title="Restore Story to Cloud"
-            >
+            <button onClick={seedDatabase} disabled={isSeeding} className="p-1.5 hover:bg-[#3f4147] rounded hover:text-[#dbdee1] transition-colors" title="Force Restore Story">
               {isSeeding ? <Loader2 size={18} className="animate-spin" /> : <RefreshCcw size={18} />}
             </button>
-            <button 
-              onClick={handleLogout} 
-              disabled={isLoggingOut} 
-              className="p-1.5 hover:bg-[#3b3d44] hover:text-[#f23f43] rounded transition-colors disabled:opacity-50" 
-              title="Log Out"
-            >
+            <button onClick={handleLogout} disabled={isLoggingOut} className="p-1.5 hover:bg-[#3b3d44] hover:text-[#f23f43] rounded transition-colors disabled:opacity-50" title="Log Out">
               {isLoggingOut ? <Loader2 size={18} className="animate-spin" /> : <LogOut size={18} />}
             </button>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 bg-[#313338] flex flex-col items-stretch min-w-0">
+      <div className="flex-1 bg-[#313338] flex flex-col min-w-0">
         <div className="h-12 border-b border-[#1f2023] shadow-sm flex items-center px-4 shrink-0">
           <Hash size={24} className="text-[#80848e] mr-2" />
           <h2 className="font-bold text-[#f2f3f5] mr-4">{activeChannel.name}</h2>
@@ -455,60 +452,60 @@ export default function DiscordClone() {
           </div>
         </div>
 
-        <div className="flex-1 w-full overflow-y-auto custom-scrollbar px-4 pt-4 pb-2 text-left flex flex-col items-stretch" ref={scrollContainerRef} onScroll={handleScroll}>
-          {isLoading && (
-            <div className="flex justify-center py-4 shrink-0">
-              <Loader2 className="animate-spin text-[#949ba4]" size={24} />
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-4 pt-4 pb-2" ref={scrollContainerRef} onScroll={handleScroll}>
+          {isLoading ? (
+            <div className="flex-1 flex flex-col items-center justify-center py-12">
+               <Loader2 className="animate-spin text-[#5865f2] mb-4" size={48} />
+               <p className="text-[#949ba4] font-medium">Syncing with Cloud...</p>
             </div>
-          )}
-          {!isLoading && messages.length === 0 && (
+          ) : messages.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-[#949ba4] text-center p-8">
-              <RefreshCcw size={48} className="mb-4 opacity-20" />
-              <p>The cloud database is empty.</p>
-              <button onClick={seedDatabase} className="mt-4 bg-[#5865f2] text-white px-4 py-2 rounded hover:bg-[#4752c4] transition-colors">Restore Story Messages</button>
+               <Loader2 className="animate-spin mb-4" size={32} />
+               <p>Restoring story messages...</p>
             </div>
-          )}
-          {messages.map((msg, index) => {
-            const author = mockUsers.find(u => u.id === msg.authorId) || currentUser;
-            const prevMsg = index > 0 ? messages[index-1] : null;
-            const msgDate = new Date(msg.timestamp);
-            const prevDate = prevMsg ? new Date(prevMsg.timestamp) : null;
-            const showDateDivider = index === 0 || msgDate.getDate() !== prevDate?.getDate();
-            const isConsecutive = !showDateDivider && prevMsg && prevMsg.authorId === msg.authorId && (msgDate - prevDate < 300000); 
-            const timeString = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            return (
-              <React.Fragment key={msg.id}>
-                {showDateDivider && (
-                  <div className="flex items-center mt-6 mb-2 mx-4 pointer-events-none select-none">
-                    <div className="flex-1 h-px bg-[#3f4147]"></div>
-                    <span className="px-3 text-[11px] font-semibold text-[#949ba4] uppercase tracking-wider">{msgDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-                    <div className="flex-1 h-px bg-[#3f4147]"></div>
-                  </div>
-                )}
-                <div className={`flex w-full items-start self-stretch group hover:bg-[#2e3035] -mx-4 px-4 py-0.5 relative text-left ${isConsecutive ? 'mt-0' : 'mt-4'}`}
-                     onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, message: msg }); }}>
-                  <div className="absolute top-0 right-4 -mt-3.5 bg-[#313338] border border-[#1e1f22] rounded shadow-sm flex items-center opacity-0 group-hover:opacity-100 transition-opacity z-10 overflow-hidden">
-                    <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors"><Smile size={18} /></button>
-                    <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors"><Reply size={18} /></button>
-                    <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors"><MoreHorizontal size={18} /></button>
-                  </div>
-                  {isConsecutive ? (<div className="w-10 shrink-0 text-center opacity-0 group-hover:opacity-100 flex items-center justify-center pt-1"><span className="text-[10px] text-gray-400">{timeString}</span></div>) 
-                  : (<img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 shrink-0 bg-gray-700" />)}
-                  <div className="ml-2 flex flex-1 min-w-0 w-full flex-col text-left">
-                    {!isConsecutive && (<div className="flex items-baseline mb-0"><span className="font-medium text-[#f2f3f5] mr-2 hover:underline cursor-pointer">{author.name}</span><span className="text-xs text-[#949ba4]">{timeString}</span></div>)}
-                    {editingMessageId === msg.id ? (
-                      <div className="mt-1 mb-1 pr-12">
-                        <div className="bg-[#383a40] rounded-lg flex flex-col px-3 py-2 w-full">
-                          <input type="text" value={editMessageText} onChange={(e) => setEditMessageText(e.target.value)} className="bg-transparent outline-none text-[#dbdee1] w-full text-sm" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleEditMessage(); else if (e.key === 'Escape') setEditingMessageId(null); }} />
+          ) : (
+            messages.map((msg, index) => {
+              const author = mockUsers.find(u => u.id === msg.authorId) || currentUser;
+              const prevMsg = index > 0 ? messages[index-1] : null;
+              const msgDate = new Date(msg.timestamp);
+              const prevDate = prevMsg ? new Date(prevMsg.timestamp) : null;
+              const showDateDivider = index === 0 || msgDate.getDate() !== prevDate?.getDate();
+              const isConsecutive = !showDateDivider && prevMsg && prevMsg.authorId === msg.authorId && (msgDate - prevDate < 300000); 
+              const timeString = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              return (
+                <React.Fragment key={msg.id}>
+                  {showDateDivider && (
+                    <div className="flex items-center mt-6 mb-2 mx-4 pointer-events-none select-none">
+                      <div className="flex-1 h-px bg-[#3f4147]"></div>
+                      <span className="px-3 text-[11px] font-semibold text-[#949ba4] uppercase tracking-wider">{msgDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                      <div className="flex-1 h-px bg-[#3f4147]"></div>
+                    </div>
+                  )}
+                  <div className={`flex items-start group hover:bg-[#2e3035] -mx-4 px-4 py-0.5 relative ${isConsecutive ? 'mt-0' : 'mt-4'}`}
+                       onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, message: msg }); }}>
+                    <div className="absolute top-0 right-4 -mt-3.5 bg-[#313338] border border-[#1e1f22] rounded shadow-sm flex items-center opacity-0 group-hover:opacity-100 transition-opacity z-10 overflow-hidden">
+                      <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="Add Reaction"><Smile size={18} /></button>
+                      <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="Reply"><Reply size={18} /></button>
+                      <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="More"><MoreHorizontal size={18} /></button>
+                    </div>
+                    {isConsecutive ? (<div className="w-10 mr-4 shrink-0 text-center opacity-0 group-hover:opacity-100 flex items-center justify-center pt-1"><span className="text-[10px] text-gray-400">{timeString}</span></div>) 
+                    : (<img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 mt-0.5 shrink-0 bg-gray-700" />)}
+                    <div className="ml-2 flex-1 min-w-0">
+                      {!isConsecutive && (<div className="flex items-baseline mb-0"><span className="font-medium text-[#f2f3f5] mr-2 hover:underline cursor-pointer">{author.name}</span><span className="text-xs text-[#949ba4]">{timeString}</span></div>)}
+                      {editingMessageId === msg.id ? (
+                        <div className="mt-1 mb-1 pr-12">
+                          <div className="bg-[#383a40] rounded-lg flex flex-col px-3 py-2 w-full">
+                            <input type="text" value={editMessageText} onChange={(e) => setEditMessageText(e.target.value)} className="bg-transparent outline-none text-[#dbdee1] w-full text-sm" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleEditMessage(); else if (e.key === 'Escape') setEditingMessageId(null); }} />
+                          </div>
+                          <div className="text-xs text-[#949ba4] mt-1">escape to <span className="text-[#00a8fc] cursor-pointer hover:underline" onClick={() => setEditingMessageId(null)}>cancel</span> • enter to <span className="text-[#00a8fc] cursor-pointer hover:underline" onClick={handleEditMessage}>save</span></div>
                         </div>
-                        <div className="text-xs text-[#949ba4] mt-1">escape to <span className="text-[#00a8fc] cursor-pointer hover:underline" onClick={() => setEditingMessageId(null)}>cancel</span> • enter to <span className="text-[#00a8fc] cursor-pointer hover:underline" onClick={handleEditMessage}>save</span></div>
-                      </div>
-                    ) : (<div><p className="text-left text-[#dbdee1] leading-relaxed break-words whitespace-pre-wrap">{msg.text}</p></div>)}
+                      ) : (<div><p className="text-[#dbdee1] leading-relaxed break-words whitespace-pre-wrap">{msg.text}</p></div>)}
+                    </div>
                   </div>
-                </div>
-              </React.Fragment>
-            );
-          })}
+                </React.Fragment>
+              );
+            })
+          )}
           <div ref={messagesEndRef} />
         </div>
         <div className="px-4 pb-6 pt-2 shrink-0">
