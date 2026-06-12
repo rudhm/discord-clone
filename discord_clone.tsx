@@ -29,12 +29,12 @@ const db = getFirestore(firebaseApp);
 const currentUser = {
   id: 'u1',
   name: 'wifey 🤍',
-  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=PersonB&backgroundColor=c0aede',
+  avatar: '/Hasi.jpg',
   status: 'online'
 };
 
 const mockUsers = [
-  { id: 'u2', name: 'rudh', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=PersonA&backgroundColor=ffdfbf', status: 'online' }
+  { id: 'u2', name: 'rudh', avatar: '/Anirudh.jpg', status: 'online' }
 ];
 
 const initialData = {
