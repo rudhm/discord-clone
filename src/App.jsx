@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import Login from './Login.jsx';
+import Login from './src/Login.jsx';
 import { 
   Hash, Volume2, Settings, Plus, Mic, Headphones, 
   Search, Bell, Pin, Users, Inbox, HelpCircle, 
@@ -10,7 +10,7 @@ import {
 import { initializeApp } from "firebase/app";
 import { 
   getFirestore, collection, addDoc, onSnapshot, 
-  query, serverTimestamp, doc, updateDoc, deleteDoc, where, writeBatch, setDoc
+  query, serverTimestamp, doc, updateDoc, deleteDoc, where, writeBatch, setDoc, orderBy
 } from "firebase/firestore";
 
 // --- FIREBASE CONFIG ---
@@ -121,7 +121,7 @@ const STORY_MESSAGES = [
   { id: 'r2', authorId: 'u2', text: "i hope i get to see you again soon\ni keep wondering what's happening there right now", timestamp: "2026-05-26T08:33:00Z" },
   { id: 'r3', authorId: 'u2', text: "i miss you so much already", timestamp: "2026-05-26T08:35:00Z" },
   { id: 'r4', authorId: 'u2', text: "gonna see what there is to eat\nlooks like upma\ni'll skip it\nbiscuits are fine", timestamp: "2026-05-26T08:37:00Z" },
-  { id: 'r5', authorId: 'u2', text: "i can still feel us kissing\nit feels so good\ni don't even want to eat right now\ni just want to hold onto that feeling a little longer", timestamp: "2026-05-26T08:39:00Z" },
+  { id: 'r5', authorId: 'u2', text: "i can still feel us kissing\ it feels so good\ni don't even want to eat right now\ni just want to hold onto that feeling a little longer", timestamp: "2026-05-26T08:39:00Z" },
   { id: 'r6', authorId: 'u2', text: "just waiting for your text\ni'll put on lost soul and sit with it", timestamp: "2026-05-26T08:41:00Z" },
   { id: 'r7', authorId: 'u2', text: "i love you so much\ni really hope you're safe and sound 🍀", timestamp: "2026-05-26T08:43:00Z" },
   { id: 'r8', authorId: 'u2', text: "i can still sense you\nstill smell you\nit's everywhere 💖", timestamp: "2026-05-26T08:46:00Z" },
@@ -211,7 +211,7 @@ const STORY_MESSAGES = [
   { id: 'm34', authorId: 'u2', text: "i hope dinner was good\ni hope the homework is done\ni hope you're not too stressed\n\ni hope a lot of things these days", timestamp: "2026-05-31T21:15:00Z" },
   { id: 'm35', authorId: 'u2', text: "new month\nyou still haven't replied\n\nthat's okay", timestamp: "2026-06-01T08:55:00Z" },
   { id: 'm36', authorId: 'u2', text: "i've been quieter around home too\npeople are noticing\ni don't know what to tell them", timestamp: "2026-06-01T13:42:00Z" },
-  { id: 'm37', authorId: 'u2', text: "ngl i'm not doing great\ i'll be honest with you even if you can't hear it right now\nthe silence is getting really heavy\n\nbut i know why you can't reply\ni know the difference between someone who doesn't want to talk\nand someone who can't\n\nso i'm not upset\ni just really miss you", timestamp: "2026-06-01T16:33:00Z" },
+  { id: 'm37', authorId: 'u2', text: "ngl i'm not doing great\ni'll be honest with you even if you can't hear it right now\nthe silence is getting really heavy\n\nbut i know why you can't reply\ni know the difference between someone who doesn't want to talk\nand someone who can't\n\nso i'm not upset\ni just really miss you", timestamp: "2026-06-01T16:33:00Z" },
   { id: 'm38', authorId: 'u2', text: "goodnight\nday 6\nstill here\nstill yours", timestamp: "2026-06-01T23:10:00Z" },
   { id: 'm39', authorId: 'u2', text: "late morning\ncouldn't get up earlier\nthat's been happening more", timestamp: "2026-06-02T11:30:00Z" },
   { id: 'm40', authorId: 'u2', text: "do you have semester stuff coming up\ni can't remember what your schedule looks like now\ni hope you're keeping up with it\nyou worked hard this year\nplease don't let any of this pull you down", timestamp: "2026-06-02T15:05:00Z" },
@@ -258,7 +258,6 @@ export default function App() {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       if (snapshot.empty) {
-        // Automatically restore if empty
         seedDatabase();
       } else {
         const msgs = snapshot.docs.map(doc => ({
@@ -267,9 +266,7 @@ export default function App() {
           timestamp: doc.data().timestamp?.toDate()?.toISOString() || new Date().toISOString()
         }));
         
-        // Sort locally to avoid Composite Index requirement
         msgs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        
         setMessages(msgs);
         setIsLoading(false);
       }
@@ -281,7 +278,6 @@ export default function App() {
     return () => unsubscribe();
   }, [activeChannelId, isLoggedIn]);
 
-  // --- SEED DATABASE FUNCTION (IDEMPOTENT) ---
   const seedDatabase = async () => {
     if (isSeeding) return;
     setIsSeeding(true);
@@ -289,7 +285,6 @@ export default function App() {
     try {
       const batch = writeBatch(db);
       STORY_MESSAGES.forEach((msg) => {
-        // Use STORY_MESSAGES.id as the document ID to prevent duplicates!
         const docRef = doc(db, "messages", msg.id);
         batch.set(docRef, {
           channelId: "c1",
@@ -299,7 +294,6 @@ export default function App() {
         });
       });
       await batch.commit();
-      console.log("Story successfully uploaded to cloud.");
     } catch (error) {
       console.error("Seeding error:", error);
     }
@@ -338,7 +332,6 @@ export default function App() {
         setNewMessage('');
       } catch (error) {
         console.error("Send error:", error);
-        alert("Send failed! Check Firebase Console Rules.");
       }
     }
   };
@@ -431,9 +424,6 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center text-[#b5bac1]">
-            <button onClick={seedDatabase} disabled={isSeeding} className="p-1.5 hover:bg-[#3f4147] rounded hover:text-[#dbdee1] transition-colors" title="Force Restore Story">
-              {isSeeding ? <Loader2 size={18} className="animate-spin" /> : <RefreshCcw size={18} />}
-            </button>
             <button onClick={handleLogout} disabled={isLoggingOut} className="p-1.5 hover:bg-[#3b3d44] hover:text-[#f23f43] rounded transition-colors disabled:opacity-50" title="Log Out">
               {isLoggingOut ? <Loader2 size={18} className="animate-spin" /> : <LogOut size={18} />}
             </button>
@@ -455,13 +445,7 @@ export default function App() {
         <div className="flex-1 overflow-y-auto custom-scrollbar px-4 pt-4 pb-2" ref={scrollContainerRef} onScroll={handleScroll}>
           {isLoading ? (
             <div className="flex-1 flex flex-col items-center justify-center py-12">
-               <Loader2 className="animate-spin text-[#5865f2] mb-4" size={48} />
-               <p className="text-[#949ba4] font-medium">Syncing with Cloud...</p>
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-[#949ba4] text-center p-8">
-               <Loader2 className="animate-spin mb-4" size={32} />
-               <p>Restoring story messages...</p>
+               <div className="w-12 h-12 rounded-full border-4 border-[#313338] border-t-[#5865f2] animate-spin mb-4"></div>
             </div>
           ) : (
             messages.map((msg, index) => {
@@ -488,10 +472,24 @@ export default function App() {
                       <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="Reply"><Reply size={18} /></button>
                       <button className="p-1.5 hover:bg-[#404249] text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="More"><MoreHorizontal size={18} /></button>
                     </div>
-                    {isConsecutive ? (<div className="w-10 mr-4 shrink-0 text-center opacity-0 group-hover:opacity-100 flex items-center justify-center pt-1"><span className="text-[10px] text-gray-400">{timeString}</span></div>) 
-                    : (<img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 mt-0.5 shrink-0 bg-gray-700" />)}
-                    <div className="ml-2 flex-1 min-w-0">
-                      {!isConsecutive && (<div className="flex items-baseline mb-0"><span className="font-medium text-[#f2f3f5] mr-2 hover:underline cursor-pointer">{author.name}</span><span className="text-xs text-[#949ba4]">{timeString}</span></div>)}
+                    
+                    {/* ENFORCED 56PX COLUMN */}
+                    <div className="w-[56px] shrink-0 flex justify-center pt-0.5">
+                      {isConsecutive ? (
+                        <span className="text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 pt-1 select-none">{timeString}</span>
+                      ) : (
+                        <img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 bg-gray-700" />
+                      )}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      {!isConsecutive && (
+                        <div className="flex items-baseline mb-0 leading-tight">
+                          <span className="font-medium text-[#f2f3f5] mr-2 hover:underline cursor-pointer">{author.name}</span>
+                          <span className="text-xs text-[#949ba4]">{timeString}</span>
+                        </div>
+                      )}
+                      
                       {editingMessageId === msg.id ? (
                         <div className="mt-1 mb-1 pr-12">
                           <div className="bg-[#383a40] rounded-lg flex flex-col px-3 py-2 w-full">
@@ -499,7 +497,9 @@ export default function App() {
                           </div>
                           <div className="text-xs text-[#949ba4] mt-1">escape to <span className="text-[#00a8fc] cursor-pointer hover:underline" onClick={() => setEditingMessageId(null)}>cancel</span> • enter to <span className="text-[#00a8fc] cursor-pointer hover:underline" onClick={handleEditMessage}>save</span></div>
                         </div>
-                      ) : (<div><p className="text-[#dbdee1] leading-relaxed break-words whitespace-pre-wrap">{msg.text}</p></div>)}
+                      ) : (
+                        <p className="m-0 p-0 text-[#dbdee1] leading-[22px] break-words whitespace-pre-wrap">{msg.text}</p>
+                      )}
                     </div>
                   </div>
                 </React.Fragment>
