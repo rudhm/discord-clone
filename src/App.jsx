@@ -248,7 +248,12 @@ export default function App() {
 
   const handleScroll = (e) => {
     const { scrollTop } = e.target;
-    if (scrollTop === 0 && messages.length > 0) {}
+    // Show loading spinner if at the top, otherwise hide it
+    if (scrollTop === 0 && messages.length > 0) {
+      setIsLoading(true);
+    } else if (scrollTop > 0 && isLoading) {
+      setIsLoading(false);
+    }
   };
 
   const Tooltip = ({ children, text }) => (
@@ -357,12 +362,14 @@ export default function App() {
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar px-4 pt-4 pb-2" ref={scrollContainerRef} onScroll={handleScroll}>
-          {isLoading ? (
-            <div className="flex-1 flex flex-col items-center justify-center py-12">
-               <div className="w-12 h-12 rounded-full border-4 border-[#313338] border-t-[#5865f2] animate-spin mb-4"></div>
+          {/* The Forever Loop Spinner */}
+          {isLoading && (
+            <div className="flex justify-center py-4 shrink-0">
+              <Loader2 className="animate-spin text-[#949ba4]" size={24} />
             </div>
-          ) : (
-            groupedMessages.map((group, gIndex) => {
+          )}
+          
+          {groupedMessages.map((group, gIndex) => {
               const author = mockUsers.find(u => u.id === group.authorId) || currentUser;
               const msgDate = new Date(group.timestamp);
               
@@ -421,8 +428,7 @@ export default function App() {
                   </div>
                 </React.Fragment>
               );
-            })
-          )}
+            })}
           <div ref={messagesEndRef} />
         </div>
         <div className="px-4 pb-6 pt-2 shrink-0">
